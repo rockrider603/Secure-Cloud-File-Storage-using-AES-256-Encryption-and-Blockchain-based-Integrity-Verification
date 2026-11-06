@@ -1,0 +1,14 @@
+.env
+.venv/
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.tsbuildinfo
+*.sqlite3
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+frontend/.vite/
+today.md

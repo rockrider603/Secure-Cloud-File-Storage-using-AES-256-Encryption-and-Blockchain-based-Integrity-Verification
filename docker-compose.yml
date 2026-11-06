@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: securefiles
+      POSTGRES_PASSWORD: dev-only-change-me
+      POSTGRES_DB: securefiles
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U securefiles"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes: [postgres_data:/var/lib/postgresql/data]
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: dev-minio-user
+      MINIO_ROOT_PASSWORD: dev-minio-secret-change-me
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [minio_data:/data]
+  hardhat:
+    build: ./contracts
+    command: npx hardhat node --hostname 0.0.0.0
+    ports: ["8545:8545"]
+  api:
+    build: ./backend
+    env_file: .env
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+      minio: {condition: service_started}
+      hardhat: {condition: service_started}
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    ports: ["5173:5173"]
+    depends_on: [api]
+volumes:
+  postgres_data:
+  minio_data:
